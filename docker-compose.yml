@@ -1,4 +1,3 @@
-version: '3'
 services:
   app:
     image: flask_app:latest
@@ -33,10 +32,7 @@ services:
         # pass volume named mysql-data to mysql container
       - mysql-data:/var/lib/mysql
       - ./db/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
-    restart: unless-stopped
-    ports:
-      - "3306:3306"
-      # credentials
+    restart: unless-stopped      # credentials
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: flask
