@@ -5,78 +5,57 @@ import re
 
 def test_flask_app():
     time.sleep(20)
-
     created_task_ids = []
 
     try:
         # בדיקה 1: דף הבית
-        home_response = requests.get("http://flask_app:5000/")
-
+        home_response = requests.get("http://flask_app:5001/")
         if home_response.status_code != 200:
-            print(1)
+            print("❌ דף הבית לא החזיר 200")
             return False
 
         # בדיקה 2: הוספת משימה ראשונה
-        url = "http://flask_app:5000/add"
+        url = "http://flask_app:5001/add"
         data = {"title": "new task"}
-        response = requests.post(url, data=data)
+        requests.post(url, data=data)
 
-        # קבלת הדף מחדש כדי לראות את המשימה החדשה
-        home_response = requests.get("http://flask_app:5000/")
-        if home_response.status_code == 200:
-            # חיפוש אחר המשימה החדשה ב-HTML
-            task_matches = re.findall(r'(\d+) \| new task', home_response.text)
-            if task_matches:
-                task_id = int(task_matches[0])
-                created_task_ids.append(task_id)
+        home_response = requests.get("http://flask_app:5001/")
+        task_matches = re.findall(r'(\d+) \| new task', home_response.text)
+        if task_matches:
+            created_task_ids.append(int(task_matches[0]))
 
         # בדיקה 3: הוספת משימה שנייה
         data2 = {"title": "second task"}
-        response2 = requests.post(url, data=data2)
+        requests.post(url, data=data2)
 
-        # קבלת הדף מחדש כדי לראות את המשימה השנייה
-        home_response = requests.get("http://flask_app:5000/")
-        if home_response.status_code == 200:
-            # חיפוש אחר המשימה השנייה ב-HTML
-            task_matches = re.findall(r'(\d+) \| second task', home_response.text)
-            if task_matches:
-                task_id = int(task_matches[0])
-                created_task_ids.append(task_id)
+        home_response = requests.get("http://flask_app:5001/")
+        task_matches = re.findall(r'(\d+) \| second task', home_response.text)
+        if task_matches:
+            created_task_ids.append(int(task_matches[0]))
 
-        # בדיקה 4: מחיקת כל המשימות שיצרנו
+        # בדיקה 4: מחיקת כל המשימות
         for task_id in created_task_ids:
-            delete_url = f"http://flask_app:5000/delete/{task_id}"
+            delete_url = f"http://flask_app:5001/delete/{task_id}"
             delete_response = requests.get(delete_url)
-
             if delete_response.status_code != 200:
-                print(1)
+                print(f"❌ מחיקה נכשלה עבור משימה {task_id}")
                 return False
 
-        # בדיקה סופית: וידוא שהמשימות נמחקו
-        final_response = requests.get("http://flask_app:5000/")
-        if final_response.status_code == 200:
-            for task_id in created_task_ids:
-                if f"{task_id} |" in final_response.text:
-                    print(1)
-                    return False
+        # בדיקה סופית: לוודא שנמחק
+        final_response = requests.get("http://flask_app:5001/")
+        for task_id in created_task_ids:
+            if f"{task_id} |" in final_response.text:
+                print(f"❌ המשימה {task_id} עדיין קיימת")
+                return False
 
-        print(0)
+        print("✅ כל הטסטים עברו בהצלחה!")
         return True
 
     except Exception as e:
-        # נסיון לנקות משימות שנוצרו גם במקרה של שגיאה
-        for task_id in created_task_ids:
-            try:
-                delete_url = f"http://flask_app:5000/delete/{task_id}"
-                requests.get(delete_url)
-            except:
-                pass
-        print(1)
+        print(f"❌ חריגה בטסט: {e}")
         return False
 
-if _name_ == "_main_":
+
+if __name__ == "__main__":
     success = test_flask_app()
-    if success:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    sys.exit(0 if success else 1)
